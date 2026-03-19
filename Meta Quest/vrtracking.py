@@ -17,44 +17,45 @@ def get_position(pose):
     matrix = pose.mDeviceToAbsoluteTracking
     return matrix[0][3], matrix[1][3], matrix[2][3]
 
-try:
-    vr_system = openvr.init(openvr.VRApplication_Scene)
-    while True:
 
-        poses = vr_system.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0,
-                                                          openvr.k_unMaxTrackedDeviceCount)
+def start_tracking():
+    try:
+        vr_system = openvr.init(openvr.VRApplication_Scene)
+        while True:
 
-        for i in range(openvr.k_unMaxTrackedDeviceCount):
+            poses = vr_system.getDeviceToAbsoluteTrackingPose(openvr.TrackingUniverseStanding, 0,
+                                                              openvr.k_unMaxTrackedDeviceCount)
 
-            if not vr_system.isTrackedDeviceConnected(i):
-                continue
+            for i in range(openvr.k_unMaxTrackedDeviceCount):
 
-            device_class = vr_system.getTrackedDeviceClass(i)
+                if not vr_system.isTrackedDeviceConnected(i):
+                    continue
 
-            if device_class != vr_system.getTrackedDeviceClass(i):
-                continue
+                device_class = vr_system.getTrackedDeviceClass(i)
 
-            pose = poses[i]
+                if device_class != vr_system.getTrackedDeviceClass(i):
+                    continue
 
-            if not pose.bPoseIsValid:
-                continue
+                pose = poses[i]
 
-            position = get_position(pose)
-            print("Device ID:", i)
-            print("Position (X, Y, Z:", position)
-            print("----------------------")
+                if not pose.bPoseIsValid:
+                    continue
 
-        time.sleep(0.1)
+                position = get_position(pose)
+                print("Device ID:", i)
+                print("Position (X, Y, Z:", position)
+                print("----------------------")
 
+            time.sleep(0.1)
 
-except KeyboardInterrupt:
-    print("Stopped tracking.")
+    except KeyboardInterrupt:
+        print("Stopped tracking.")
 
-except openvr.OpenVRError as e:
-    print("SteamVR error:", e)
+    except openvr.OpenVRError as e:
+        print("SteamVR error:", e)
 
-finally:
-    openvr.shutdown()
+    finally:
+        openvr.shutdown()
 
 
 '''
