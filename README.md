@@ -8,6 +8,8 @@ IDE Recommendations:
 
 Project Set Up Instructions:
 
+1. Set the IPs for the servers to your machines values in the metaquesttracking.html
+
 
 TO-DO:
  -Fill in ReadMe
