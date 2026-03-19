@@ -2,7 +2,7 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 import json
 
 class ControllerDataServer(WebSocket):
-    def receiveMessage(self):
+    def handleMessage(self):
         try:
             data = json.loads(self.data)
             print("Controller: ", data['controller'])
@@ -11,13 +11,13 @@ class ControllerDataServer(WebSocket):
         except ValueError:
             print("Invalid JSON Received: ", self.data)
 
-    def connected(self):
+    def handleConnected(self):
         print(self.address, "Connected")
 
-    def disconnected(self):
+    def handleClose(self):
         print(self.address, "Disconnected")
 
 def startServer():
-        server = SimpleWebSocketServer('0.0.0.0', 8000, ControllerDataServer)
+        server = SimpleWebSocketServer('0.0.0.0', 5005, ControllerDataServer)
         print("Server Started")
         server.serveforever()

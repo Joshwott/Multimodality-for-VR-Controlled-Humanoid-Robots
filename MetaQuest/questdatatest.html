@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quest Data Test</title>
+</head>
+<body>
+    <h1>Testing WebSocket</h1>
+
+    <script>
+        const socket = new WebSocket("ws://127.0.0.1:5005");
+
+        socket.onopen = function()
+        {
+            console.log("Connected To Server...");
+
+            setInterval(function()
+            {
+                let data =
+                    {
+                        controller: "Right",
+                        position: [Math.random(), Math.random(), Math.random()],
+                        orientation: [0,0,0,1]
+                    };
+
+                socket.send(JSON.stringify(data));
+            }, 100);
+        }
+    </script>
+
+</body>
+</html>
