@@ -6,5 +6,8 @@ IDE Recommendations:
 1. Pycharm -> Python
 2. Webstorm -> HTML/JavaScript
 
+Project Set Up Instructions:
+
+
 TO-DO:
  -Fill in ReadMe
