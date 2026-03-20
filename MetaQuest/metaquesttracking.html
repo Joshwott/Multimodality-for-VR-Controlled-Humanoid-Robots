@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meta Quest 2 Controller Streaming</title>
+</head>
+<body>
+<h2>Meta Quest 2 Controller Streaming</h2>
+<p>Tap the screen to start streaming controller data.</p>
+
+<script>
+    const WEBSERVER = "ws://192.168.212.147:5005";
+    let socket = new WebSocket(WEBSERVER);
+
+    socket.onopen = () => console.log("WebSocket connected");
+    socket.onerror = (e) => console.error("WebSocket error:", e);
+    socket.onclose = () => console.log("WebSocket closed");
+
+    let xrSession = null;
+    let referenceSpace = null;
+
+    document.body.addEventListener("click", startXR, { once: true });
+
+    async function startXR() {
+        if (!navigator.xr) {
+            console.error("WebXR not available on this device.");
+            return;
+        }
+
+        try {
+            xrSession = await navigator.xr.requestSession("immersive-vr", {
+                optionalFeatures: ["local-floor", "bounded-floor"]
+            });
+
+            referenceSpace = await xrSession.requestReferenceSpace("local-floor");
+
+            xrSession.requestAnimationFrame(onXRFrame);
+            console.log("XR session started");
+        } catch (err) {
+            console.error("Failed to start XR session:", err);
+        }
+    }
+
+    function onXRFrame(time, frame) {
+        const session = frame.session;
+        session.requestAnimationFrame(onXRFrame);
+
+        const sources = session.inputSources;
+
+        sources.forEach(source => {
+            if (!source.gripSpace) return;
+
+            const pose = frame.getPose(source.gripSpace, referenceSpace);
+            if (!pose) return;
+
+            const { position, orientation } = pose.transform;
+
+            const data = {
+                controller: source.handedness, // "left" or "right"
+                position: [position.x, position.y, position.z],
+                orientation: [orientation.x, orientation.y, orientation.z, orientation.w]
+            };
+
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(data));
+            }
+        });
+    }
+</script>
+</body>
+</html>
