@@ -9,6 +9,7 @@ IDE Recommendations:
 Project Set Up Instructions:
 
 1. Set the IPs for the servers to your machines values in the metaquesttracking.html
+2. Install ngrok from https://ngrok.com/
 
 
 TO-DO:
