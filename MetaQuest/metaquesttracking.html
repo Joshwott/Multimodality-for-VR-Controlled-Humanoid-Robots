@@ -12,7 +12,10 @@
     const WEBSERVER = "ws://192.168.212.147:5005";
     let socket = new WebSocket(WEBSERVER);
 
-    socket.onopen = () => console.log("WebSocket connected");
+    socket.onopen = () => {
+        console.log("WebSocket connected");
+        alert("WebSocket connected");
+    };
     socket.onerror = (e) => console.error("WebSocket error:", e);
     socket.onclose = () => console.log("WebSocket closed");
 
