@@ -3,7 +3,7 @@
 # Getter for the robot IP address
 # Returns the ip address
 def getRobotIP():
-    ipAddress = "<IP of your robot>"
+    ipAddress = "169.254.111.115"
     return ipAddress
 
 # Getter for the robot port

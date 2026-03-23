@@ -2,12 +2,14 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 import json
 
 class ControllerDataServer(WebSocket):
+    controllerData = None
+
     def handleMessage(self):
         try:
             data = json.loads(self.data)
-            print("Controller: ", data['controller'])
-            print("  Position: ", data['position'])
-            print("  Orientation:", data['orientation'])
+            controllerData = data
+            print(controllerData)
+
         except ValueError:
             print("Invalid JSON Received: ", self.data)
 
@@ -21,3 +23,5 @@ def startServer():
         server = SimpleWebSocketServer('0.0.0.0', 5005, ControllerDataServer)
         print("Server Started")
         server.serveforever()
+
+
