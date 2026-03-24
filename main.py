@@ -1,6 +1,5 @@
 # Main file responsible for initiating all the code.
 import threading
-
 from MetaQuest import vrtrackingserver
 from NAORobot import naocontrols
 
