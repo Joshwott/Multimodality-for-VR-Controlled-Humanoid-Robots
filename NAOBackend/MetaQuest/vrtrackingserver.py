@@ -18,13 +18,16 @@ class ControllerDataServer(object):
             data, address = socketServer.recvfrom(1024)
 
             with ControllerDataServer.lock:
-                ControllerDataServer.controllerData = data
+                try:
+                    ControllerDataServer.controllerData = data.decode('utf-8')
+                except Exception as e:
+                    print("Error decoding data:", e)
+                    ControllerDataServer.controllerData = None
 
-            print("Received: ", data)
+                #print("Received:", ControllerDataServer.controllerData)
 
     @staticmethod
     def getData():
         with ControllerDataServer.lock:
             return ControllerDataServer.controllerData
-
 
