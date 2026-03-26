@@ -7,11 +7,11 @@ from NAORobot import naocontrols
 def main():
 
     #Starts the websocket server in the background.
-    serverThread = threading.Thread(target=vrtrackingserver.startServer)
+    serverThread = threading.Thread(target=vrtrackingserver.ControllerDataServer.startServer())
     serverThread.daemon = True
     serverThread.start()
 
-    naocontrols.runControls()
+    #naocontrols.runControls()
 
 if __name__ == "__main__":
     main()

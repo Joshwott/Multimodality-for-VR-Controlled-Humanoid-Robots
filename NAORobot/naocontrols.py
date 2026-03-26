@@ -87,10 +87,13 @@ def runControls():
         if data is not None:
             if data['controller'] == "Right" or data['controller'] == "Left":
                 #controlArms(data)
+                print("Received: ", data)
+                '''
                 motion.setAngles(
                     ["RShoulderPitch", "RShoulderRoll", "RElbowYaw", "RElbowRoll", "RWristYaw"],
                     [-1.0, -0.8, 1.5, 0.5, 0.0],
                     0.2
                 )
+                '''
 
-        time.sleep(5)
+        time.sleep(10)

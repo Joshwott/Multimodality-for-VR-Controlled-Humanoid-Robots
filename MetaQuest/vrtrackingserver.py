@@ -1,29 +1,30 @@
-from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from threading import Lock
-import json
+import socket
 
-class ControllerDataServer(WebSocket):
+class ControllerDataServer(object):
     controllerData = None
     lock = Lock()
 
-    def handleMessage(self):
-        try:
-            data = json.loads(self.data)
+    @staticmethod
+    def startServer():
+        port = 5005
+
+        socketServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        socketServer.bind(('0.0.0.0', port))
+
+        print("Server Listening on UDP port "+ str(port) + "...")
+
+        while True:
+            data, address = socketServer.recvfrom(1024)
+
             with ControllerDataServer.lock:
                 ControllerDataServer.controllerData = data
 
-        except ValueError:
-            print("Invalid JSON Received: ", self.data)
+            print("Received: ", data)
 
-    def handleConnected(self):
-        print("User connected with address: ", self.address)
-
-    def handleClose(self):
-        print("User disconnected with address: ", self.address)
-
-def startServer():
-        server = SimpleWebSocketServer('0.0.0.0', 5005, ControllerDataServer)
-        print("Server Started...")
-        server.serveforever()
+    @staticmethod
+    def getData():
+        with ControllerDataServer.lock:
+            return ControllerDataServer.controllerData
 
 
