@@ -1,7 +1,7 @@
 # Main file responsible for initiating all the code.
 import threading
 from MetaQuest import vrtrackingserver
-from NAORobot import naocontrols
+
 
 # Main method starts the Meta Quest 2 and NAO robot links
 def main():

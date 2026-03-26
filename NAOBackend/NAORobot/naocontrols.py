@@ -1,11 +1,10 @@
 from naoqi import ALProxy
-from MetaQuest.vrtrackingserver import ControllerDataServer
+from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
 import naoconnection
 import time
-import math
 
 motion = ALProxy("ALMotion", naoconnection.getRobotIP(),
-              naoconnection.getRobotPort())
+                 naoconnection.getRobotPort())
 
 posture = ALProxy("ALRobotPosture", naoconnection.getRobotIP(),
                   naoconnection.getRobotPort())
