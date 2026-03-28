@@ -65,7 +65,6 @@ def separateControllerData(data):
     delimiter = data.split('|')
     leftControllerPosition = delimiter[0]
     rightControllerPosition = delimiter[1]
-    joystickPosition = delimiter[2]
     leftControllerRotation = delimiter[3]
     rightControllerRotation = delimiter[4]
 
@@ -81,14 +80,18 @@ def separateControllerData(data):
 #@param limit of the joint.
 #@param arm left or right.
 def armPositionFromPosition(position, limit, arm):
+
     x, y, z = position  # VR coordinates
 
     xNorm = normalize(x, calibration["minX"], calibration["maxX"])
+
+    if arm == "Right":
+        xNorm = 1 - xNorm
+
     yNorm = normalize(y, calibration["minY"], calibration["maxY"])
     zNorm = normalize(z, calibration["minZ"], calibration["maxZ"])
 
     shoulderPitch = (1 - yNorm) * (limit["ShoulderPitch"][1] - limit["ShoulderPitch"][0]) + limit["ShoulderPitch"][0]
-
     shoulderRoll = xNorm * (limit["ShoulderRoll"][1] - limit["ShoulderRoll"][0]) + limit["ShoulderRoll"][0]
 
     elbowYaw = 0.0
@@ -102,6 +105,10 @@ motion = ALProxy("ALMotion", naoconnection.getRobotIP(),
 #Calibrates the positions for the user of the robot.
 def calibrateNAO():
     global calibration, CALIBRATED
+
+    print("NAO not calibrated yet.")
+    print("Calibrating NAO...")
+    time.sleep(1)
 
     print("Hold arms relaxed at your sides...")
     time.sleep(3)
@@ -124,14 +131,15 @@ def calibrateNAO():
     print("Stretch arms out sideways...")
     time.sleep(3)
     data = ControllerDataServer.getData()
-    leftPos, _, _, _ = separateControllerData(data)
-    calibration["maxX"] = leftPos[0]
+    leftPos, rightPos, _, _ = separateControllerData(data)
+    calibration["maxX"] = max(leftPos[0], rightPos[0])
+
 
     print("Bring arms close to body...")
     time.sleep(3)
     data = ControllerDataServer.getData()
-    leftPos, _, _, _ = separateControllerData(data)
-    calibration["minX"] = leftPos[0]
+    leftPos, rightPos, _, _ = separateControllerData(data)
+    calibration["minX"] = min(leftPos[0], rightPos[0])
 
     print("Reach arms forward...")
     time.sleep(3)
@@ -146,7 +154,7 @@ def calibrateNAO():
     calibration["minZ"] = leftPos[2]
 
     CALIBRATED = True
-    print(calibration)
+    print("NAO calibrated: ", calibration)
 
 #Runs the arm controls.
 def runArmControls():

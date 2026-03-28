@@ -18,7 +18,7 @@ def main():
     armThread.daemon = True
     armThread.start()
 
-    print("All Daemons alive...")
+    print("All Daemon threads alive...")
     while True:
         pass
 
