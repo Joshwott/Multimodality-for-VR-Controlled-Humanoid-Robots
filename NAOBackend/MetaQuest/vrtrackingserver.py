@@ -1,6 +1,7 @@
 from threading import Lock
 import socket
 
+#Class containing the UDP Server that the data sends.
 class ControllerDataServer(object):
     controllerData = None
     lock = Lock()
