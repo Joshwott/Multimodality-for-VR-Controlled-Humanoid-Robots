@@ -1,7 +1,7 @@
 # Main file responsible for initiating all the code.
 import threading
 from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
-from NAORobot import naomovementcontrols, naoarmtracking
+from NAORobot import naomovementcontrols, naobodytracking
 
 # Main method starts the Meta Quest 2 and NAO robot links
 def main():
@@ -14,9 +14,13 @@ def main():
     movementThread.daemon = True
     movementThread.start()
 
-    armThread = threading.Thread(target=naoarmtracking.runArmControls)
+    armThread = threading.Thread(target=naobodytracking.runArmTracking)
     armThread.daemon = True
     armThread.start()
+
+    headThread = threading.Thread(target=naobodytracking.runHeadTracking)
+    headThread.daemon = True
+    headThread.start()
 
     print("All Daemon threads alive...")
     while True:
