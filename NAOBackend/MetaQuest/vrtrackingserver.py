@@ -1,6 +1,7 @@
 from threading import Lock
 import socket
 
+#Class containing the UDP Server that the data sends.
 class ControllerDataServer(object):
     controllerData = None
     lock = Lock()
@@ -18,13 +19,16 @@ class ControllerDataServer(object):
             data, address = socketServer.recvfrom(1024)
 
             with ControllerDataServer.lock:
-                ControllerDataServer.controllerData = data
+                try:
+                    ControllerDataServer.controllerData = data.decode('utf-8')
+                except Exception as e:
+                    print("Error decoding data:", e)
+                    ControllerDataServer.controllerData = None
 
-            print("Received: ", data)
+                #print("Received:", ControllerDataServer.controllerData)
 
     @staticmethod
     def getData():
         with ControllerDataServer.lock:
             return ControllerDataServer.controllerData
-
 

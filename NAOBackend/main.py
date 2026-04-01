@@ -1,17 +1,31 @@
 # Main file responsible for initiating all the code.
 import threading
-from MetaQuest import vrtrackingserver
-
+from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
+from NAORobot import naomovementcontrols, naobodytracking
 
 # Main method starts the Meta Quest 2 and NAO robot links
 def main():
-
-    #Starts the websocket server in the background.
-    serverThread = threading.Thread(target=vrtrackingserver.ControllerDataServer.startServer())
+    # Start UDP server in a background threadq
+    serverThread = threading.Thread(target=ControllerDataServer.startServer)
     serverThread.daemon = True
     serverThread.start()
 
-    #naocontrols.runControls()
+    movementThread = threading.Thread(target=naomovementcontrols.runMovementControls)
+    movementThread.daemon = True
+    movementThread.start()
+
+    armThread = threading.Thread(target=naobodytracking.runArmTracking)
+    armThread.daemon = True
+    armThread.start()
+
+    headThread = threading.Thread(target=naobodytracking.runHeadTracking)
+    headThread.daemon = True
+    headThread.start()
+
+    print("All Daemon threads alive...")
+    while True:
+        pass
+
 
 if __name__ == "__main__":
     main()
