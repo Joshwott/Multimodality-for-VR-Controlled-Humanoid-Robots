@@ -8,27 +8,19 @@ using System.Text;
 
 public class UDPVideoServer : MonoBehaviour
 {
-    [Header("UDP Settings")]
     public int listenPort = 5006;
     public int maxPacketSize = 60000;
-
-    [Header("Display")]
     public Renderer targetRenderer;
-
     private UdpClient udpClient;
     private UdpClient sendClient;
     private Thread receiveThread;
     private bool running = false;
-
     private byte[] frameBuffer;
     private int expectedFrameSize = 0;
     private int receivedBytes = 0;
-
     private Queue<byte[]> frameQueue = new Queue<byte[]>();
     private Texture2D texture;
-
-    private IPEndPoint clientEP;
-    private bool readySent = false;
+    private IPEndPoint pythonEP;
 
     void Start()
     {
@@ -38,9 +30,18 @@ public class UDPVideoServer : MonoBehaviour
         texture = new Texture2D(2, 2);
         targetRenderer.material.mainTexture = texture;
 
-        udpClient = new UdpClient(listenPort);
+        udpClient = new UdpClient();
+        udpClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+        udpClient.Client.Bind(new IPEndPoint(IPAddress.Any, listenPort));
         sendClient = new UdpClient();
+
         running = true;
+
+        int broadcastPort = 5007;
+        IPEndPoint broadcastEP = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
+        byte[] readyMsg = Encoding.UTF8.GetBytes("READY");
+        sendClient.Send(readyMsg, readyMsg.Length, broadcastEP);
+        Debug.Log("Sent READY broadcast...");
 
         receiveThread = new Thread(ReceiveData);
         receiveThread.IsBackground = true;
@@ -57,17 +58,13 @@ public class UDPVideoServer : MonoBehaviour
             {
                 byte[] data = udpClient.Receive(ref remoteEP);
 
-                // Send READY once to first client
-                if (!readySent)
+                if (pythonEP == null)
                 {
-                    sendClient.Send(Encoding.UTF8.GetBytes("READY"), 5, remoteEP);
-                    clientEP = remoteEP;
-                    readySent = true;
-                    Debug.Log("Sent READY to client: " + remoteEP.ToString());
+                    pythonEP = remoteEP;
+                    Debug.Log("Connected to Python: " + pythonEP.ToString());
                     continue;
                 }
 
-                // First 4 bytes: frame size
                 if (data.Length == 4)
                 {
                     expectedFrameSize = System.BitConverter.ToInt32(data, 0);
@@ -76,8 +73,12 @@ public class UDPVideoServer : MonoBehaviour
                     continue;
                 }
 
-                // Copy chunk into buffer
                 int copyLength = Mathf.Min(data.Length, expectedFrameSize - receivedBytes);
+                if (frameBuffer == null)
+                {
+                    Debug.LogWarning($"Received video data but frameBuffer is null. Packet size: {data.Length}");
+                    continue;
+                }
                 System.Buffer.BlockCopy(data, 0, frameBuffer, receivedBytes, copyLength);
                 receivedBytes += copyLength;
 
@@ -89,12 +90,13 @@ public class UDPVideoServer : MonoBehaviour
                         System.Buffer.BlockCopy(frameBuffer, 0, frameCopy, 0, expectedFrameSize);
                         frameQueue.Enqueue(frameCopy);
                     }
+
                     receivedBytes = 0;
                 }
             }
             catch (SocketException ex)
             {
-                Debug.Log("Socket exception: " + ex.Message);
+                Debug.LogWarning("Socket exception: " + ex.Message);
             }
         }
     }
@@ -106,7 +108,18 @@ public class UDPVideoServer : MonoBehaviour
             while (frameQueue.Count > 0)
             {
                 byte[] frameData = frameQueue.Dequeue();
+
+                if (texture == null)
+                    texture = new Texture2D(2, 2);
+
                 texture.LoadImage(frameData);
+                bool success = texture.LoadImage(frameData);
+                if (!success)
+                {
+                    Debug.LogWarning($"Failed to load image, expected {expectedFrameSize} bytes, received {receivedBytes} bytes.");
+                }
+                
+                texture.Apply();
             }
         }
     }
@@ -114,6 +127,7 @@ public class UDPVideoServer : MonoBehaviour
     void OnApplicationQuit()
     {
         running = false;
+
         if (receiveThread != null && receiveThread.IsAlive)
             receiveThread.Abort();
 
