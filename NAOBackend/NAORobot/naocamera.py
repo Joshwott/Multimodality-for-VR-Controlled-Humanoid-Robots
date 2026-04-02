@@ -44,7 +44,9 @@ class SimulatedLiveFeed:
 
         if not ret:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            return None
+            ret, frame = self.cap.read()
+
+        frame = cv2.resize(frame, (320, 240))
 
         return frame
 
@@ -52,26 +54,41 @@ class SimulatedLiveFeed:
         self.cap.release()
 
 
-def startCameraClient():
+def unityHandshake():
+    print("Waiting for connection READY...")
 
+    udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    broadcastPort = 5007
+    udpSocket.bind(("", broadcastPort))
+
+    while True:
+        data, address = udpSocket.recvfrom(1024)
+        if data.decode() == "READY":
+            print("Unity READY Received")
+            return address, udpSocket
+
+
+def startCameraClient():
     scriptPath = os.path.dirname(os.path.realpath(__file__))
 
     simVideo = os.path.join(scriptPath, "Frieren.mp4")
-    simAudio = os.path.join(scriptPath, "FrierenAudio.wav")
+    #simAudio = os.path.join(scriptPath, "FrierenAudio.wav")
 
-    pygame.mixer.init()
-    pygame.mixer.music.load(simAudio)
-    pygame.mixer.music.play()
-
-    address = "10.138.161.31"
-    port = 5006
-    udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     MAX_PACKET_SIZE = 60000
+    address, udpSocket = unityHandshake()
+
+    unityIP = address[0]
+    unityPORT = 5006
+    videoAddress = (unityIP, unityPORT)
 
     if REAL_NAO:
         cameraType = NAOLiveFeed()
     else:
         cameraType = SimulatedLiveFeed(simVideo)
+        #pygame.mixer.init()
+        #pygame.mixer.music.load(simAudio)
+        #pygame.mixer.music.play()
 
     try:
         fps = 30
@@ -86,16 +103,16 @@ def startCameraClient():
             if REAL_NAO:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-            cv2.imshow("Live Camera Feed", frame)
+            #cv2.imshow("Live Camera Feed", frame)
 
             _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
             data = buffer.tobytes()
             size = len(data)
 
-            udpSocket.sendto(struct.pack(">I", size), (address, port))
+            udpSocket.sendto(struct.pack("<I", size), videoAddress)
 
             for i in range(0, size, MAX_PACKET_SIZE):
-                udpSocket.sendto(data[i:i + MAX_PACKET_SIZE], (address, port))
+                udpSocket.sendto(data[i:i + MAX_PACKET_SIZE], videoAddress)
 
             if cv2.waitKey(delay) & 0xFF == ord('q'):
                 break
@@ -103,3 +120,5 @@ def startCameraClient():
     finally:
         cameraType.release()
         cv2.destroyAllWindows()
+
+startCameraClient()
