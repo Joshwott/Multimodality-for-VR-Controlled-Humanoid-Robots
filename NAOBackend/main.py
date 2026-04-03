@@ -11,6 +11,8 @@ def main():
     serverThread.daemon = True
     serverThread.start()
 
+    time.sleep(20)
+
     movementThread = threading.Thread(target=naomovementcontrols.runMovementControls)
     movementThread.daemon = True
     movementThread.start()
@@ -23,7 +25,7 @@ def main():
     headThread.daemon = True
     headThread.start()
 
-    time.sleep(10)
+    time.sleep(40)
 
     cameraThread = threading.Thread(target=naocamera.startCameraClient)
     cameraThread.daemon = True

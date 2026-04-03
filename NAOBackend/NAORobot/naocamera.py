@@ -55,7 +55,7 @@ class SimulatedLiveFeed:
 
 
 def unityHandshake():
-    print("Waiting for connection READY...")
+    print("Waiting for READY handshake...")
 
     udpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udpSocket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -103,7 +103,7 @@ def startCameraClient():
             if REAL_NAO:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
 
-            #cv2.imshow("Live Camera Feed", frame)
+            cv2.imshow("Live Camera Feed", frame)
 
             _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
             data = buffer.tobytes()
@@ -120,5 +120,3 @@ def startCameraClient():
     finally:
         cameraType.release()
         cv2.destroyAllWindows()
-
-startCameraClient()
