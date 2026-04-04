@@ -2,15 +2,17 @@
 from naoqi import ALProxy
 from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
 import naoconnection, naomovementcontrols
-import math, time
+import math, time, socket
 
 CALIBRATED = False
 ALPHA = 0.3
 
 calibration = {
     "center": [0, 0, 0],
-    "maxX": 0,
-    "minX": 0,
+    "maxXLeft": 0,
+    "maxXRight": 0,
+    "minXLeft": 0,
+    "minXRight": 0,
     "maxY": 0,
     "minY": 0,
     "maxZ": 0,
@@ -99,7 +101,6 @@ def separateControllerData(data):
 def headRotationFromHeadset(rotation):
 
     pitch, yaw, roll = rotation
-
     pitch = degreesToRadians(pitch)
     yaw = degreesToRadians(yaw)
 
@@ -120,14 +121,18 @@ def headRotationFromHeadset(rotation):
 #@param arm left or right.
 def armPositionFromControllerPosition(position, limit, arm):
     x, y, z = position  # VR coordinates
-    xNorm = normalise(x, calibration["minX"], calibration["maxX"])
 
     if arm == "Right":
+        xNorm = normalise(x, calibration["minXRight"], calibration["maxXRight"])
         xNorm = 1 - xNorm
+    else:
+        xNorm = normalise(x, calibration["minXLeft"], calibration["maxXLeft"])
+
 
     yNorm = normalise(y, calibration["minY"], calibration["maxY"])
     zNorm = normalise(z, calibration["minZ"], calibration["maxZ"])
     shoulderPitch = (1 - yNorm) * (limit["ShoulderPitch"][1] - limit["ShoulderPitch"][0]) + limit["ShoulderPitch"][0]
+
     shoulderRoll = xNorm * (limit["ShoulderRoll"][1] - limit["ShoulderRoll"][0]) + limit["ShoulderRoll"][0]
     elbowYaw = 0.0
     elbowRoll = 0.5
@@ -145,8 +150,10 @@ def calibrateNAO():
     print("Hold arms relaxed at your sides...")
     time.sleep(3)
     data = ControllerDataServer.getData()
-    leftPos, _, _, _, _ = separateControllerData(data)
+    leftPos, rightPos, _, _, _ = separateControllerData(data)
     calibration["center"] = leftPos
+    calibration["minXLeft"] = leftPos[0]
+    calibration["minXRight"] = rightPos[0]
 
     print("Raise arms up...")
     time.sleep(3)
@@ -164,14 +171,8 @@ def calibrateNAO():
     time.sleep(3)
     data = ControllerDataServer.getData()
     leftPos, rightPos, _, _, _ = separateControllerData(data)
-    calibration["maxX"] = max(leftPos[0], rightPos[0])
-
-
-    print("Bring arms close to body...")
-    time.sleep(3)
-    data = ControllerDataServer.getData()
-    leftPos, rightPos, _, _, _ = separateControllerData(data)
-    calibration["minX"] = min(leftPos[0], rightPos[0])
+    calibration["maxXLeft"] = leftPos[0]
+    calibration["maxXRight"] = rightPos[0]
 
     print("Reach arms forward...")
     time.sleep(3)
@@ -197,9 +198,9 @@ def runArmTracking():
 
         if not CALIBRATED:
             calibrateNAO()
+            sendCalibrationData()
 
         data = ControllerDataServer.getData()
-        #print (data)
 
         if data is None:
             time.sleep(0.01)
@@ -225,8 +226,30 @@ def runArmTracking():
 
         time.sleep(0.02)
 
-def runHeadTracking():
+#Sends the calibrated data to the Quest headset to be used as boundries in the haptic feedback.
+def sendCalibrationData():
 
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    payload = "CalibrationData|" + ",".join([
+        str(calibration["minXLeft"]),
+        str(calibration["maxXLeft"]),
+        str(calibration["minXRight"]),
+        str(calibration["maxXRight"]),
+        str(calibration["minY"]),
+        str(calibration["maxY"]),
+        str(calibration["minZ"]),
+        str(calibration["maxZ"]),
+    ])
+
+    questIP = "10.138.161.28"
+    questPort = 5010
+    sock.sendto(payload.encode(), (questIP, questPort))
+
+    print("Calibration data: " + payload + " sent to Meta Quest 2...")
+
+
+def runHeadTracking():
     prevHead = [0.0, 0.0]
     motion.setStiffnesses("Head", 1.0)
     while True:

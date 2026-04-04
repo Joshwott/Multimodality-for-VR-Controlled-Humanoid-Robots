@@ -73,7 +73,6 @@ def startCameraClient():
     scriptPath = os.path.dirname(os.path.realpath(__file__))
 
     simVideo = os.path.join(scriptPath, "Frieren.mp4")
-    #simAudio = os.path.join(scriptPath, "FrierenAudio.wav")
 
     MAX_PACKET_SIZE = 60000
     address, udpSocket = unityHandshake()
@@ -86,9 +85,6 @@ def startCameraClient():
         cameraType = NAOLiveFeed()
     else:
         cameraType = SimulatedLiveFeed(simVideo)
-        #pygame.mixer.init()
-        #pygame.mixer.music.load(simAudio)
-        #pygame.mixer.music.play()
 
     try:
         fps = 30
