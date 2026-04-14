@@ -7,6 +7,7 @@ import time
 # Main method starts the Meta Quest 2 and NAO robot links
 def main():
     # Start UDP server in a background threadq
+
     serverThread = threading.Thread(target=ControllerDataServer.startServer)
     serverThread.daemon = True
     serverThread.start()

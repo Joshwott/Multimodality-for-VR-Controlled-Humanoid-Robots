@@ -36,8 +36,8 @@ class NAOLiveFeed:
 
 class SimulatedLiveFeed:
 
-    def __init__(self, path):
-        self.cap = cv2.VideoCapture(path)
+    def __init__(self, webCam=0):
+        self.cap = cv2.VideoCapture(webCam)
 
     def getFrame(self):
         ret, frame = self.cap.read()
@@ -52,7 +52,6 @@ class SimulatedLiveFeed:
 
     def release(self):
         self.cap.release()
-
 
 def unityHandshake():
     print("Waiting for READY handshake...")
@@ -70,9 +69,6 @@ def unityHandshake():
 
 
 def startCameraClient():
-    scriptPath = os.path.dirname(os.path.realpath(__file__))
-
-    simVideo = os.path.join(scriptPath, "Frieren.mp4")
 
     MAX_PACKET_SIZE = 60000
     address, udpSocket = unityHandshake()
@@ -84,7 +80,7 @@ def startCameraClient():
     if REAL_NAO:
         cameraType = NAOLiveFeed()
     else:
-        cameraType = SimulatedLiveFeed(simVideo)
+        cameraType = SimulatedLiveFeed()
 
     try:
         fps = 30
