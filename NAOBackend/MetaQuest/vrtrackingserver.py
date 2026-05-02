@@ -25,10 +25,9 @@ class ControllerDataServer(object):
                     print("Error decoding data:", e)
                     ControllerDataServer.controllerData = None
 
-                #print("Received:", ControllerDataServer.controllerData)
+            #print(ControllerDataServer.controllerData)
 
     @staticmethod
     def getData():
         with ControllerDataServer.lock:
             return ControllerDataServer.controllerData
-

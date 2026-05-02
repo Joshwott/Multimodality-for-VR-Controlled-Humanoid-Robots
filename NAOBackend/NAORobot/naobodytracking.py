@@ -1,6 +1,7 @@
 #Responsible for handling the movement of NAOs arms and joints
 from naoqi import ALProxy
 from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
+from NAOBackend.Webots.webotserver import sendJointData
 import naoconnection, naomovementcontrols
 import math, time, socket
 
@@ -147,9 +148,16 @@ def calibrateNAO():
     print("Calibrating Arms...")
     time.sleep(1)
 
+    def waitForData():
+        data = None
+        while data is None:
+            data = ControllerDataServer.getData()
+            time.sleep(0.01)
+        return data
+
     print("Hold arms relaxed at your sides...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, rightPos, _, _, _ = separateControllerData(data)
     calibration["center"] = leftPos
     calibration["minXLeft"] = leftPos[0]
@@ -157,32 +165,32 @@ def calibrateNAO():
 
     print("Raise arms up...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, _, _, _, _ = separateControllerData(data)
     calibration["maxY"] = leftPos[1]
 
     print("Push arms down...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, _, _, _, _ = separateControllerData(data)
     calibration["minY"] = leftPos[1]
 
     print("Stretch arms out sideways...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, rightPos, _, _, _ = separateControllerData(data)
     calibration["maxXLeft"] = leftPos[0]
     calibration["maxXRight"] = rightPos[0]
 
     print("Reach arms forward...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, _, _, _, _ = separateControllerData(data)
     calibration["maxZ"] = leftPos[2]
 
     print("Pull arms back...")
     time.sleep(3)
-    data = ControllerDataServer.getData()
+    data = waitForData()
     leftPos, _, _, _, _ = separateControllerData(data)
     calibration["minZ"] = leftPos[2]
 
@@ -220,6 +228,8 @@ def runArmTracking():
             prevRight = rightAngles
             motion.setAngles(LEFTARM, leftAngles, 0.2)
             motion.setAngles(RIGHTARM, rightAngles, 0.2)
+            sendJointData(LEFTARM, leftAngles)
+            sendJointData(RIGHTARM, rightAngles)
 
         except Exception as e:
             print("Arm control error:", e)
@@ -242,7 +252,7 @@ def sendCalibrationData():
         str(calibration["maxZ"]),
     ])
 
-    questIP = "10.138.161.28"
+    questIP = "10.138.161.15"
     questPort = 5010
     sock.sendto(payload.encode(), (questIP, questPort))
 
@@ -270,6 +280,7 @@ def runHeadTracking():
             headAngles = smooth(headAngles, prevHead)
             prevHead = headAngles
             motion.setAngles(HEAD, headAngles, 0.2)
+            sendJointData(HEAD, headAngles)
 
         except Exception as e:
             print("Head control error:", e)

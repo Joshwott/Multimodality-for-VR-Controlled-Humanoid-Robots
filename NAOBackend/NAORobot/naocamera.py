@@ -36,22 +36,30 @@ class NAOLiveFeed:
 
 class SimulatedLiveFeed:
 
-    def __init__(self, webCam=0):
-        self.cap = cv2.VideoCapture(webCam)
+    def __init__(self, host="127.0.0.1", port=9090):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((host, port))
+        self.expectedSize = 0
+        self.buffer = b''
+        print("Listening for Webots camera on UDP " + str(port))
 
     def getFrame(self):
-        ret, frame = self.cap.read()
+        while True:
+            data, _ = self.sock.recvfrom(65535)
 
-        if not ret:
-            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            ret, frame = self.cap.read()
+            if len(data) == 4:
+                self.expectedSize = struct.unpack("<I", data)[0]
+                self.buffer = b''
+                continue
 
-        frame = cv2.resize(frame, (320, 240))
+            self.buffer += data
 
-        return frame
+            if len(self.buffer) >= self.expectedSize:
+                imageArray = np.frombuffer(self.buffer[:self.expectedSize], dtype=np.uint8)
+                return cv2.imdecode(imageArray, cv2.IMREAD_COLOR)
 
     def release(self):
-        self.cap.release()
+        self.sock.close()
 
 def unityHandshake():
     print("Waiting for READY handshake...")
