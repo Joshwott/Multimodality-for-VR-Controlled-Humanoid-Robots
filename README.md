@@ -11,6 +11,7 @@ External Software:
 1. SideQuet -> https://sidequestvr.com/
 2. Meta Horizon -> https://horizon.meta.com/
 3. Choregraphe => https://maxtronics.com/en/choregraphe-software/
+4. Webots => https://cyberbotics.com/
 
 Set Up Instructions:
 
