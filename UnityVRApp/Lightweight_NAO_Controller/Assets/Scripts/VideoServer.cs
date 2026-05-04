@@ -37,15 +37,27 @@ public class UDPVideoServer : MonoBehaviour
 
         running = true;
 
-        int broadcastPort = 5007;
-        IPEndPoint broadcastEP = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
-        byte[] readyMsg = Encoding.UTF8.GetBytes("READY");
-        sendClient.Send(readyMsg, readyMsg.Length, broadcastEP);
-        Debug.Log("Sent READY broadcast...");
-
         receiveThread = new Thread(ReceiveData);
         receiveThread.IsBackground = true;
         receiveThread.Start();
+
+        StartCoroutine(SendReadyPacket());
+    }
+
+    IEnumerator SendReadyPacket()
+    {
+        int broadcastPort = 5007;
+        IPEndPoint broadcastEP = new IPEndPoint(IPAddress.Broadcast, broadcastPort);
+        byte[] readyMsg = Encoding.UTF8.GetBytes("READY");
+
+        while (pythonEP == null)
+        {
+            sendClient.Send(readyMsg, readyMsg.Length, broadcastEP);
+            Debug.Log("Sending READY broadcast...");
+            yield return new WaitForSeconds(1f); 
+        }
+        sendClient.Send(readyMsg, readyMsg.Length, broadcastEP);
+        Debug.Log("READY Received...");
     }
 
     void ReceiveData()
@@ -76,7 +88,7 @@ public class UDPVideoServer : MonoBehaviour
                 int copyLength = Mathf.Min(data.Length, expectedFrameSize - receivedBytes);
                 if (frameBuffer == null)
                 {
-                    Debug.LogWarning($"Received video data but frameBuffer is null. Packet size: {data.Length}");
+                    Debug.LogWarning("Received video data but frameBuffer is null. Packet size: " + data.Length);
                     continue;
                 }
                 System.Buffer.BlockCopy(data, 0, frameBuffer, receivedBytes, copyLength);
@@ -116,7 +128,8 @@ public class UDPVideoServer : MonoBehaviour
                 bool success = texture.LoadImage(frameData);
                 if (!success)
                 {
-                    Debug.LogWarning($"Failed to load image, expected {expectedFrameSize} bytes, received {receivedBytes} bytes.");
+                    Debug.LogWarning("Failed to load image, expected " + expectedFrameSize + " bytes, received " + 
+                    receivedBytes + " bytes.");
                 }
                 
                 texture.Apply();
@@ -129,9 +142,18 @@ public class UDPVideoServer : MonoBehaviour
         running = false;
 
         if (receiveThread != null && receiveThread.IsAlive)
+        {
             receiveThread.Abort();
+        }
 
-        if (udpClient != null) udpClient.Close();
-        if (sendClient != null) sendClient.Close();
+        if (udpClient != null) 
+        {
+            udpClient.Close();
+        }
+
+        if (sendClient != null) 
+        {
+            sendClient.Close();
+        }
     }
 }
