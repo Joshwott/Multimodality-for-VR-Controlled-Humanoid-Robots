@@ -1,9 +1,11 @@
 #Responsible for handling the movement of NAOs arms and joints
 from naoqi import ALProxy
+
+from NAOBackend.MetaQuest import vrtrackingserver
 from NAOBackend.MetaQuest.vrtrackingserver import ControllerDataServer
 from NAOBackend.Webots.webotserver import sendJointData
 import naoconnection, naomovementcontrols
-import math, time, socket
+import math, time, socket, keyboard
 
 CALIBRATED = False
 ALPHA = 0.3
@@ -234,6 +236,9 @@ def runArmTracking():
         except Exception as e:
             print("Arm control error:", e)
 
+        if keyboard.is_pressed('q'):
+            printControllerPosition()
+
         time.sleep(0.02)
 
 #Sends the calibrated data to the Quest headset to be used as boundries in the haptic feedback.
@@ -286,3 +291,6 @@ def runHeadTracking():
             print("Head control error:", e)
 
         time.sleep(0.02)
+
+def printControllerPosition():
+    print(ControllerDataServer.getData())
